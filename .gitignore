@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+outputs/*
+!outputs/.gitkeep
+data/*
+!data/.gitkeep
+*.pkl
+*.joblib
+.DS_Store
+.ipynb_checkpoints/
