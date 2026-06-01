@@ -7,11 +7,18 @@ from pathlib import Path
 FOLDER_REZULTATE = Path("outputs")
 FOLDER_REZULTATE.mkdir(exist_ok=True)
 
-# ==============================
-# TRIMITERE EMAIL
-# ==============================
+# Trimitere email
 
-def trimite_alerta_email(probabilitate, precipitatii, status, scor_risc=None, temperatura_maxima=None, viteza_vant=None, zile_ploioase_consecutive=None):
+
+def trimite_alerta_email(
+    probabilitate,
+    precipitatii,
+    status,
+    scor_risc=None,
+    temperatura_maxima=None,
+    viteza_vant=None,
+    zile_ploioase_consecutive=None,
+):
     email_expeditor = os.getenv("GMAIL_SENDER")
     parola_aplicatie = os.getenv("GMAIL_APP_PASSWORD")
     email_destinatar = os.getenv("GMAIL_RECEIVER")
@@ -21,10 +28,26 @@ def trimite_alerta_email(probabilitate, precipitatii, status, scor_risc=None, te
         return False
 
     subiect = f"{status}: Avertizare eveniment climatic extrem"
-    text_scor_risc = f"Scor hibrid de risc: {scor_risc}\n" if scor_risc is not None else "Scor hibrid de risc: indisponibil\n"
-    text_temperatura = f"Temperatura maxima: {temperatura_maxima:.2f} °C\n" if temperatura_maxima is not None else ""
-    text_vant = f"Viteza maxima a vantului: {viteza_vant:.2f}\n" if viteza_vant is not None else ""
-    text_zile_ploioase = f"Numar de zile ploioase consecutive: {zile_ploioase_consecutive}\n" if zile_ploioase_consecutive is not None else ""
+    text_scor_risc = (
+        f"Scor hibrid de risc: {scor_risc}\n"
+        if scor_risc is not None
+        else "Scor hibrid de risc: indisponibil\n"
+    )
+    text_temperatura = (
+        f"Temperatura maxima: {temperatura_maxima:.2f} °C\n"
+        if temperatura_maxima is not None
+        else ""
+    )
+    text_vant = (
+        f"Viteza maxima a vantului: {viteza_vant:.2f}\n"
+        if viteza_vant is not None
+        else ""
+    )
+    text_zile_ploioase = (
+        f"Numar de zile ploioase consecutive: {zile_ploioase_consecutive}\n"
+        if zile_ploioase_consecutive is not None
+        else ""
+    )
 
     corp_email = f"""
 SISTEM HIBRID DE AVERTIZARE TIMPURIE PENTRU EVENIMENTE CLIMATICE EXTREME
@@ -60,9 +83,9 @@ Verifica dashboardul si monitorizeaza evolutia conditiilor meteorologice.
         print(f"A aparut o eroare neasteptata: {eroare}")
     return False
 
-# ==============================
-# CONTROL TRIMITERE ALERTA
-# ==============================
+
+# Control trimitere alerta
+
 
 def trebuie_trimisa_alerta(status):
     cale_jurnal = FOLDER_REZULTATE / "ultima_alerta_status.txt"
@@ -77,9 +100,8 @@ def trebuie_trimisa_alerta(status):
         return True
     return False
 
-# ==============================
-# TESTARE DIRECTA
-# ==============================
+
+# Testare directa a functiilor de alerta
 
 if __name__ == "__main__":
     status_test = "ALERTA ROSIE"

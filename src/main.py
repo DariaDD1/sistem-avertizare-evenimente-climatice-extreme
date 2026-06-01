@@ -4,12 +4,13 @@ import sys
 from pathlib import Path
 from train_model import antreneaza_si_salveaza
 
-# ==============================
-# RULARE PIPELINE PRINCIPAL
-# ==============================
+#  Rulare pipeline principal
+
 
 def ruleaza_dashboard():
-    subprocess.run([sys.executable, "-m", "streamlit", "run", "src/dashboard.py"], check=True)
+    subprocess.run(
+        [sys.executable, "-m", "streamlit", "run", "src/dashboard.py"], check=True
+    )
 
 
 def main():
@@ -28,6 +29,7 @@ def main():
 
     if argumente.run_dashboard:
         ruleaza_dashboard()
+
 
 if __name__ == "__main__":
     main()

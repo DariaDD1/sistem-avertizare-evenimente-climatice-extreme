@@ -7,7 +7,17 @@ import joblib
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, classification_report, confusion_matrix, f1_score, matthews_corrcoef, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    matthews_corrcoef,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -20,26 +30,73 @@ warnings.filterwarnings("ignore")
 FOLDER_REZULTATE = Path("outputs")
 FOLDER_REZULTATE.mkdir(exist_ok=True)
 
-# ==============================
-# MODELE SI EVALUARE
-# ==============================
+# Modele candidate pentru antrenare si comparare
+
 
 def obtine_modele():
     return {
-        "Regresie Logistica": Pipeline([
-            ("standardizare", StandardScaler()),
-            ("model", LogisticRegression(class_weight="balanced", max_iter=2000, random_state=42)),
-        ]),
-        "Random Forest": RandomForestClassifier(n_estimators=300, min_samples_split=5, min_samples_leaf=2, class_weight="balanced", random_state=42, n_jobs=-1),
-        "XGBoost": XGBClassifier(n_estimators=300, learning_rate=0.05, max_depth=4, subsample=0.85, colsample_bytree=0.85, eval_metric="logloss", random_state=42, n_jobs=-1),
-        "SVM": Pipeline([
-            ("standardizare", StandardScaler()),
-            ("model", SVC(kernel="rbf", C=1.0, gamma="scale", class_weight="balanced", probability=True, random_state=42)),
-        ]),
-        "Retea Neuronala": Pipeline([
-            ("standardizare", StandardScaler()),
-            ("model", MLPClassifier(hidden_layer_sizes=(64, 32), activation="relu", alpha=0.001, learning_rate_init=0.001, max_iter=500, early_stopping=True, random_state=42)),
-        ]),
+        "Regresie Logistica": Pipeline(
+            [
+                ("standardizare", StandardScaler()),
+                (
+                    "model",
+                    LogisticRegression(
+                        class_weight="balanced", max_iter=2000, random_state=42
+                    ),
+                ),
+            ]
+        ),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=300,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            class_weight="balanced",
+            random_state=42,
+            n_jobs=-1,
+        ),
+        "XGBoost": XGBClassifier(
+            n_estimators=300,
+            learning_rate=0.05,
+            max_depth=4,
+            subsample=0.85,
+            colsample_bytree=0.85,
+            eval_metric="logloss",
+            random_state=42,
+            n_jobs=-1,
+        ),
+        "SVM": Pipeline(
+            [
+                ("standardizare", StandardScaler()),
+                (
+                    "model",
+                    SVC(
+                        kernel="rbf",
+                        C=1.0,
+                        gamma="scale",
+                        class_weight="balanced",
+                        probability=True,
+                        random_state=42,
+                    ),
+                ),
+            ]
+        ),
+        "Retea Neuronala": Pipeline(
+            [
+                ("standardizare", StandardScaler()),
+                (
+                    "model",
+                    MLPClassifier(
+                        hidden_layer_sizes=(64, 32),
+                        activation="relu",
+                        alpha=0.001,
+                        learning_rate_init=0.001,
+                        max_iter=500,
+                        early_stopping=True,
+                        random_state=42,
+                    ),
+                ),
+            ]
+        ),
     }
 
 
@@ -47,7 +104,9 @@ def evalueaza_modelul(model, date_test, tinta_test, prag_predictie=0.30):
     probabilitati = model.predict_proba(date_test)[:, 1]
     predictii = (probabilitati >= prag_predictie).astype(int)
     matrice_confuzie = confusion_matrix(tinta_test, predictii, labels=[0, 1])
-    adevarat_negativ, fals_pozitiv, fals_negativ, adevarat_pozitiv = matrice_confuzie.ravel()
+    adevarat_negativ, fals_pozitiv, fals_negativ, adevarat_pozitiv = (
+        matrice_confuzie.ravel()
+    )
 
     indicatori = {
         "acuratete": accuracy_score(tinta_test, predictii),
@@ -67,9 +126,9 @@ def evalueaza_modelul(model, date_test, tinta_test, prag_predictie=0.30):
     raport_clasificare = classification_report(tinta_test, predictii, zero_division=0)
     return indicatori, matrice_confuzie, raport_clasificare
 
-# ==============================
-# ANTRENARE SI SELECTIE MODEL OPTIM
-# ==============================
+
+# Antrenare, comparare si salvare modele
+
 
 def compara_modelele(date):
     rezultate = []
@@ -98,7 +157,9 @@ def compara_modelele(date):
         for nume_model, model in obtine_modele().items():
             print(f"\nAntrenez modelul: {nume_model}")
             model.fit(trasaturi_antrenare, tinta_antrenare)
-            indicatori, matrice_confuzie, raport_clasificare = evalueaza_modelul(model, trasaturi_testare, tinta_testare, prag_predictie=0.30)
+            indicatori, matrice_confuzie, raport_clasificare = evalueaza_modelul(
+                model, trasaturi_testare, tinta_testare, prag_predictie=0.30
+            )
 
             print(f"Recall: {indicatori['recall']:.4f}")
             print(f"Scor F1: {indicatori['scor_f1']:.4f}")
@@ -108,14 +169,27 @@ def compara_modelele(date):
             print("Raport de clasificare:")
             print(raport_clasificare)
 
-            rezultate.append({"impartire": nume_impartire, "model": nume_model, **indicatori})
-            modele_antrenate[(nume_impartire, nume_model)] = {"model": model, "indicatori": indicatori}
+            rezultate.append(
+                {"impartire": nume_impartire, "model": nume_model, **indicatori}
+            )
+            modele_antrenate[(nume_impartire, nume_model)] = {
+                "model": model,
+                "indicatori": indicatori,
+            }
 
-    tabel_rezultate = pd.DataFrame(rezultate).sort_values(by=["recall", "scor_f1", "roc_auc"], ascending=False).reset_index(drop=True)
-    tabel_rezultate.to_csv(FOLDER_REZULTATE / "rezultate_comparare_modele.csv", index=False)
+    tabel_rezultate = (
+        pd.DataFrame(rezultate)
+        .sort_values(by=["recall", "scor_f1", "roc_auc"], ascending=False)
+        .reset_index(drop=True)
+    )
+    tabel_rezultate.to_csv(
+        FOLDER_REZULTATE / "rezultate_comparare_modele.csv", index=False
+    )
 
     cel_mai_bun_rand = tabel_rezultate.iloc[0]
-    informatii_model_optim = modele_antrenate[(cel_mai_bun_rand["impartire"], cel_mai_bun_rand["model"])]
+    informatii_model_optim = modele_antrenate[
+        (cel_mai_bun_rand["impartire"], cel_mai_bun_rand["model"])
+    ]
 
     print("\nMODEL RECOMANDAT PENTRU DASHBOARD")
     print(f"Impartire: {cel_mai_bun_rand['impartire']}")
@@ -124,14 +198,16 @@ def compara_modelele(date):
 
     return tabel_rezultate, informatii_model_optim, cel_mai_bun_rand
 
-# ==============================
-# SALVARE REZULTATE
-# ==============================
+
+# Salvare model optim si date procesate pentru dashboard
+
 
 def salveaza_rezultatele(date, informatii_model_optim, cel_mai_bun_rand):
     joblib.dump(informatii_model_optim["model"], FOLDER_REZULTATE / "model_optim.pkl")
 
-    with open(FOLDER_REZULTATE / "coloane_trasaturi.json", "w", encoding="utf-8") as fisier:
+    with open(
+        FOLDER_REZULTATE / "coloane_trasaturi.json", "w", encoding="utf-8"
+    ) as fisier:
         json.dump(COLOANE_TRASATURI, fisier, indent=4)
 
     metadate = {
@@ -141,7 +217,9 @@ def salveaza_rezultatele(date, informatii_model_optim, cel_mai_bun_rand):
         "prag_predictie": float(cel_mai_bun_rand["prag_predictie"]),
     }
 
-    with open(FOLDER_REZULTATE / "metadate_model_optim.json", "w", encoding="utf-8") as fisier:
+    with open(
+        FOLDER_REZULTATE / "metadate_model_optim.json", "w", encoding="utf-8"
+    ) as fisier:
         json.dump(metadate, fisier, indent=4)
 
     date.to_csv(FOLDER_REZULTATE / "date_meteorologice_procesate.csv", index=False)
@@ -154,9 +232,8 @@ def antreneaza_si_salveaza(cai_fisiere):
     salveaza_rezultatele(date, informatii_model_optim, cel_mai_bun_rand)
     return comparatie
 
-# ==============================
-# RULARE DIRECTA
-# ==============================
+
+# Rulare directa a antrenarii si salvarii modelului optim
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
